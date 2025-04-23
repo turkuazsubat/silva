@@ -1,5 +1,13 @@
 import asyncio
 
+#cevaplar eklendi
+responses = {
+    "selam": "merhaba",
+    "nasılsın": "İyiyim, sen?",
+    "teşekkür ederim": "Rica ederim!",
+}
+
+
 async def handle_client(reader, writer):
     addr = writer.get_extra_info('peername')
     print(f"{addr} bağlandı.")
@@ -10,8 +18,10 @@ async def handle_client(reader, writer):
             break
         message = data.decode()
         print(f"{addr} mesaj gönderdi: {message}")
+    
+        #olası farklı(nasılsın, teşekkür ederim) bir mesajda tekrar mesaj istemesi.
+        response = responses.get(message.lower(), "Üzgünüm, anlamadım.")
 
-        response = f"Bot: Mesajını aldım: {message}"
         writer.write(response.encode())
         await writer.drain()
 
