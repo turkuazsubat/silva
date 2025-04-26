@@ -12,7 +12,7 @@ async def tcp_client():
         writer.write(msg.encode())
         await writer.drain()
 
-        data = await reader.read(100)
+        data = await reader.read(1024)
         print(data.decode())
 
     writer.close()

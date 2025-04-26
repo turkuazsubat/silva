@@ -1,41 +1,48 @@
 import asyncio
 from bot_utils import get_weather, extract_city_from_message
-
-# Cevaplar sözlüğü
-responses = {
-    "selam": "Merhaba!",
-    "nasılsın": "İyiyim, sen?",
-    "teşekkür ederim": "Rica ederim!",
-}
+from response import responses
 
 async def handle_client(reader, writer):
     addr = writer.get_extra_info('peername')
     print(f"{addr} bağlandı.")
-
+    
     while True:
-        data = await reader.read(100)
+        data = await reader.read(1024)
         if not data:
             break
         message = data.decode().strip()
         print(f"{addr} mesaj gönderdi: {message}")
-
-        response = ""
-
-        if "hava durumu" in message.lower():
-            # Şehri mesajdan çek
-            city = extract_city_from_message(message)
-            writer.write(f"Bot: '{city}' için hava durumu aranıyor...\n".encode())
+        
+        if not message:
+            continue
+        
+        parts = [part.strip() for part in message.lower().split("ve")]
+        tasks = []
+        
+        for part in parts:
+            if "hava durumu" in part:
+                city = extract_city_from_message(part)
+                tasks.append(get_weather(city))
+            elif part in responses:
+                async def fake_response(resp=responses[part]):
+                    await asyncio.sleep(0)
+                    return resp
+                tasks.append(fake_response())
+        
+        if not tasks:
+            writer.write("Bot: Üzgünüm, buraya çalışmadım.\n".encode())
             await writer.drain()
+            continue
 
-            weather = await get_weather(city)
-            response = f"Bot: {weather}"
-        else:
-            # dict ile yanıt ver
-            response = responses.get(message.lower(), "Üzgünüm, anlamadım.")
-
-        writer.write((response + "\n").encode())
-        await writer.drain()
-
+        try:
+            results = await asyncio.gather(*tasks)
+            combined_response = "\n".join(results) 
+            writer.write(f"Bot: {combined_response}".encode())
+            await writer.drain()
+        except Exception as e:
+            writer.write(f"Bot: Bir hata oluştu: {str(e)}\n".encode())
+            await writer.drain()
+    
     print(f"{addr} bağlantısı kapandı.")
     writer.close()
 
@@ -46,4 +53,5 @@ async def main():
     async with server:
         await server.serve_forever()
 
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())
