@@ -1,6 +1,7 @@
 import asyncio
 from bot_utils import get_weather, extract_city_from_message
 from response import responses
+from doviz import get_exchange_rate, extract_currency_from_message
 
 #day4
 from aiohttp import web
@@ -192,11 +193,19 @@ async def handle_client(reader, writer):
             if "hava durumu" in part:
                 city = extract_city_from_message(part)
                 tasks.append(get_weather(city))
+            elif "döviz" in part:
+                currencies = extract_currency_from_message(part)
+                if len(currencies) >= 2:
+                    base, target = currencies[0], currencies[1]
+                else:
+                    base, target = "usd", "try"
+                tasks.append(get_exchange_rate(base, target))
             elif part in responses:
                 async def fake_response(resp=responses[part]):
                     await asyncio.sleep(0)
                     return resp
                 tasks.append(fake_response())
+            
         
         if not tasks:
             writer.write("Bot: Üzgünüm, buraya çalışmadım.\n".encode())

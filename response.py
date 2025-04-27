@@ -5,6 +5,7 @@ responses = {
     "iyiyim": "Buna sevindim!",
     "kötüyüm": "Üzgünüm, umarım yakında daha iyi hissedersin.",
     "teşekkür ederim": "Rica ederim!",
+    "teşekkürler": "Rica ederim, ne demek!",
     "sağ ol": "Her zaman!",
     "ne yapıyorsun": "Seninle konuşuyorum :)",
     "naber": "İyiyim, senden naber?",
